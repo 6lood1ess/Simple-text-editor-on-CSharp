@@ -46,6 +46,7 @@
     <Compile Include="FileSearcher.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TextEditor.cs" />
     <Compile Include="TextFile.cs" />
   </ItemGroup>
   <ItemGroup>
