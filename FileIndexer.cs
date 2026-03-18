@@ -21,7 +21,7 @@ public class FileIndexer {
       var fileContent = File.ReadAllText(filePath);
 
       foreach (var keyword in keywordsToIndex) {
-        if (fileContent.Contains(keyword, StringComparison.OrdinalIgnoreCase)) {
+        if (fileContent.ToLower().Contains(keyword.ToLower())) {
           _keywordToFilesMap[keyword].Add(filePath);
         }
       }

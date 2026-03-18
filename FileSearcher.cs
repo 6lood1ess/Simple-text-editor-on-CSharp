@@ -12,7 +12,7 @@ public class FileSearcher {
 
       var content = File.ReadAllText(file);
 
-      if (keywords.Any(keyword => content.Contains(keyword, StringComparison.OrdinalIgnoreCase))) {
+      if (keywords.Any(keyword => content.ToLower().Contains(keyword.ToLower()))) {
         result.Add(file);
       }
     }
