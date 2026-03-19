@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 class Program {
   static void Main() {
@@ -39,17 +40,20 @@ class Program {
     Console.Write("\nFile path: ");
     var filePath = Console.ReadLine();
 
-    textEditor.Open(filePath);
+    if (!File.Exists(filePath)) {
+      Console.WriteLine($"\nFile not found: {filePath}");
+      return;
+    }
+
+    if (!textEditor.Open(filePath)) {
+      return;
+    }
 
     while (true) {
 
       try {
 
-        Console.WriteLine("\n-- Editor --" +
-                          "\nFile content:" +
-                          $"\n{new string('-', 50)}" +
-                          $"\n{textEditor.GetContent()}" +
-                          $"\n{new string('-', 50)}");
+        textEditor.DisplayLines();
 
         Console.WriteLine("\nCommands:" +
                           "\n1. Add new line" +
@@ -152,24 +156,19 @@ class Program {
       
       TextFile loadedFile = TextFile.BinaryDeserialize(loadPath);
       
-      filePath = loadedFile.FilePath;
-
-      File.WriteAllText(filePath, loadedFile.Content);
+      string temporaryPath = loadedFile.FilePath;
+      
+      if (string.IsNullOrEmpty(temporaryPath) || !Directory.Exists(Path.GetDirectoryName(temporaryPath))) {
+        temporaryPath = Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(loadPath) + ".txt");
+      }
+      
+      File.WriteAllText(temporaryPath, loadedFile.Content);
+      filePath = temporaryPath;
       
       if (textEditor.Open(filePath)) {
-        
-        Console.WriteLine("\nNote: opening file, then setting content from binary . . .");
-        
-        var lines = loadedFile.Content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-
-        foreach (var line in lines) {
-          if (!string.IsNullOrEmpty(line)) {
-            textEditor.AddLine(line);
-          }
-        }
-        
-        Console.WriteLine($"Loaded from binary: {loadPath}");
+        Console.WriteLine($"\nLoaded from binary: {loadPath}");
       }
+
     } catch (Exception exception) {
       Console.WriteLine($"\nError loading binary: {exception.Message}");
     }
@@ -189,24 +188,19 @@ class Program {
       
       TextFile loadedFile = TextFile.XmlDeserialize(loadPath);
       
-      filePath = loadedFile.FilePath;
-
-      File.WriteAllText(filePath, loadedFile.Content);
+      string temporaryPath = loadedFile.FilePath;
+      
+      if (string.IsNullOrEmpty(temporaryPath) || !Directory.Exists(Path.GetDirectoryName(temporaryPath))) {
+        temporaryPath = Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(loadPath) + ".txt");
+      }
+      
+      File.WriteAllText(temporaryPath, loadedFile.Content);
+      filePath = temporaryPath;
       
       if (textEditor.Open(filePath)) {
-
-        Console.WriteLine("\nNote: opening file, then setting content from XML . . .");
-        
-        var lines = loadedFile.Content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-
-        foreach (var line in lines) {
-          if (!string.IsNullOrEmpty(line)) {
-            textEditor.AddLine(line);
-          }
-        }
-        
-        Console.WriteLine($"Loaded from XML: {loadPath}");
+        Console.WriteLine($"\nLoaded from XML: {loadPath}");
       }
+
     } catch (Exception exception) {
       Console.WriteLine($"\nError loading XML: {exception.Message}");
     }
@@ -226,7 +220,7 @@ class Program {
         return;
       }
 
-      Console.Write("Enter keywords: ");
+      Console.Write("Enter keywords (comma separated): ");
       var keywordsInput = Console.ReadLine();
       
       if (string.IsNullOrWhiteSpace(keywordsInput)) {
@@ -234,9 +228,9 @@ class Program {
         return;
       }
 
-      var keywords = keywordsInput.Split(',');
+      var keywords = keywordsInput.Split(',').Select(keyword => keyword.Trim()).ToArray();
 
-      if (keywords.Length == 0) {
+      if (keywords.Length == 0 || keywords.All(string.IsNullOrEmpty)) {
         Console.WriteLine("\nNo valid keywords");
         return;
       }
@@ -247,7 +241,7 @@ class Program {
       if (foundFiles.Count > 0) {
         Console.WriteLine("File list:");
         foreach (var file in foundFiles) {
-          Console.WriteLine($"{file}");
+          Console.WriteLine($"  {file}");
         }
       }
     } catch (Exception exception) {
@@ -269,8 +263,15 @@ class Program {
         return;
       }
 
-      Console.Write("Enter keywords: ");
-      var keywords = Console.ReadLine().Split(',');
+      Console.Write("Enter keywords (comma separated): ");
+      var keywordsInput = Console.ReadLine();
+      
+      if (string.IsNullOrWhiteSpace(keywordsInput)) {
+        Console.WriteLine("\nKeywords not specified");
+        return;
+      }
+
+      var keywords = keywordsInput.Split(',').Select(keyword => keyword.Trim()).ToArray();
 
       indexer.BuildIndexForDirectory(directory, keywords);
       Console.WriteLine("\nIndexing results:");
