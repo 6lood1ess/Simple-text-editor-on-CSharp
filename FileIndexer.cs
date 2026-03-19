@@ -10,31 +10,77 @@ public class FileIndexer {
 
     _keywordToFilesMap.Clear();
 
-    var textFilesInDirectory = Directory.GetFiles(targetDirectory, "*.txt");
+    try {
 
-    foreach (var keyword in keywordsToIndex) {
-      _keywordToFilesMap[keyword] = new List<string>();
-    }
+      if (!Directory.Exists(targetDirectory)) {
+        Console.WriteLine($"Directory not found: {targetDirectory}");
+        return;
+      }
 
-    foreach (var filePath in textFilesInDirectory) {
+      if (keywordsToIndex == null || keywordsToIndex.Length == 0) {
+        Console.WriteLine("No keywords specified for indexing");
+        return;
+      }
 
-      var fileContent = File.ReadAllText(filePath);
+      var textFilesInDirectory = Directory.GetFiles(targetDirectory, "*.txt");
+
+      if (textFilesInDirectory.Length == 0) {
+        Console.WriteLine("No text files in directory");
+        return;
+      }
 
       foreach (var keyword in keywordsToIndex) {
-        if (fileContent.ToLower().Contains(keyword.ToLower())) {
-          _keywordToFilesMap[keyword].Add(filePath);
+        _keywordToFilesMap[keyword] = new List<string>();
+      }
+
+      if (_keywordToFilesMap.Count == 0) {
+        Console.WriteLine("No valid keywords");
+        return;
+      }
+
+      foreach (var filePath in textFilesInDirectory) {
+
+        try {
+          var fileContent = File.ReadAllText(filePath);
+
+          foreach (var keyword in keywordsToIndex) {
+            if (fileContent.ToLower().Contains(keyword.ToLower())) {
+              _keywordToFilesMap[keyword].Add(filePath);
+            }
+          }
+        } catch (Exception exception) {
+          Console.WriteLine($"Error reading file {filePath}: {exception.Message}");
         }
       }
+
+      Console.WriteLine("Indexing completed");
+
+    } catch (Exception exception) {
+      Console.WriteLine($"Indexing error: {exception.Message}");
     }
   }
 
   public void DisplayIndexResults() {
 
+    if (_keywordToFilesMap.Count == 0) {
+      Console.WriteLine("Index is empty. Run indexing first!");
+      return;
+    }
+
+    bool hasResults = false;
+
     foreach (var keywordEntry in _keywordToFilesMap) {
-      Console.WriteLine($"Keyword: {keywordEntry.Key}");
-      foreach (var filePath in keywordEntry.Value) {
-        Console.WriteLine($"  - {filePath}");
+      if (keywordEntry.Value.Count > 0) {
+        hasResults = true;
+        Console.WriteLine($"Keyword: {keywordEntry.Key}");
+        foreach (var filePath in keywordEntry.Value) {
+          Console.WriteLine($"  - {filePath}");
+        }
       }
+    }
+
+    if (!hasResults) {
+      Console.WriteLine("No files contain the specified keywords");
     }
   }
 }
