@@ -153,6 +153,8 @@ class Program {
       TextFile loadedFile = TextFile.BinaryDeserialize(loadPath);
       
       filePath = loadedFile.FilePath;
+
+      File.WriteAllText(filePath, loadedFile.Content);
       
       if (textEditor.Open(filePath)) {
         
@@ -188,6 +190,8 @@ class Program {
       TextFile loadedFile = TextFile.XmlDeserialize(loadPath);
       
       filePath = loadedFile.FilePath;
+
+      File.WriteAllText(filePath, loadedFile.Content);
       
       if (textEditor.Open(filePath)) {
 
@@ -230,7 +234,7 @@ class Program {
         return;
       }
 
-      var keywords = Console.ReadLine().Split(',');
+      var keywords = keywordsInput.Split(',');
 
       if (keywords.Length == 0) {
         Console.WriteLine("\nNo valid keywords");

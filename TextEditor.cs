@@ -15,6 +15,12 @@ public class TextEditor {
   public bool Open(string path) {
 
     try {
+
+      if (!File.Exists(path)) {
+        Console.WriteLine($"File not found: {path}");
+        return false;
+      }
+
       _currentFile = new TextFile(path);
       _history.Clear();
 
