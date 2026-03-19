@@ -10,7 +10,7 @@ public class TextFile {
   public string Content { get; set; }
   public DateTime LastModified { get; set; }
 
-  public TextFile() { } //для сериализации
+  public TextFile() { } //for serialization
 
   public TextFile(string path) {
     FilePath = path;
@@ -21,14 +21,14 @@ public class TextFile {
     
     try {
       if (!File.Exists(FilePath)) {
-        throw new FileNotFoundException($"File not found: {FilePath}");
+        throw new FileNotFoundException($"\nFile not found: {FilePath}");
       }
 
       Content = File.ReadAllText(FilePath);
       LastModified = File.GetLastWriteTime(FilePath);
 
     } catch (Exception exception) {
-      throw new Exception($"Error loading file: {exception.Message}");
+      throw new Exception($"\nError loading file: {exception.Message}");
     }
   }
 
@@ -39,7 +39,7 @@ public class TextFile {
       LastModified = DateTime.Now;
 
     } catch (Exception exception) { 
-      throw new Exception($"Error saving file: {exception.Message}");
+      throw new Exception($"\nError saving file: {exception.Message}");
     }
   }
 
@@ -54,7 +54,7 @@ public class TextFile {
         }
       }
     } catch (Exception exception) { 
-      throw new Exception($"Binary serialization error: {exception.Message}");
+      throw new Exception($"\nBinary serialization error: {exception.Message}");
     }
   }
 
@@ -72,7 +72,7 @@ public class TextFile {
         }
       }
     } catch (Exception exception) {
-      throw new Exception($"Binary deserialization error: {exception.Message}");
+      throw new Exception($"\nBinary deserialization error: {exception.Message}");
     }
   }
 
@@ -85,7 +85,7 @@ public class TextFile {
         xmlSerializer.Serialize(stream, this);
       }
     } catch (Exception exception) { 
-      throw new Exception($"XML serialization error: {exception.Message}");
+      throw new Exception($"\nXML serialization error: {exception.Message}");
     }
   }
 
@@ -98,7 +98,7 @@ public class TextFile {
         return (TextFile)xmlSerializer.Deserialize(stream);
       }
     } catch (Exception exception) {
-      throw new Exception($"XML deserialization error: {exception.Message}");
+      throw new Exception($"\nXML deserialization error: {exception.Message}");
     }
   }
 }

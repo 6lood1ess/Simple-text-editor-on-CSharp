@@ -58,7 +58,7 @@ public class TextEditor {
   public void Undo() {
 
     if (!_isFileOpened) {
-      Console.WriteLine("Open the file first! >:O");
+      Console.WriteLine("\nOpen the file first! >:O");
       return;
     }
 
@@ -68,26 +68,26 @@ public class TextEditor {
 
       var previousState = _history.Peek();
       _currentFile.Content = string.Join(Environment.NewLine, previousState.LinesContent);
-      Console.WriteLine($"Undo to version from {_history.Peek().Timestamp}");
+      Console.WriteLine($"\nUndo to version from {_history.Peek().Timestamp}");
 
     } else {
-      Console.WriteLine("No changes to undo");
+      Console.WriteLine("\nNo changes to undo");
     }
   }
 
   public void Save() {
 
     if (!_isFileOpened) {
-      Console.WriteLine("Open the file first! >:O");
+      Console.WriteLine("\nOpen the file first! >:O");
       return;
     }
 
     try {
       _currentFile.Save();
-      Console.WriteLine("File saved successfully");
+      Console.WriteLine("\nFile saved successfully");
 
     } catch (Exception exception) {
-      Console.WriteLine($"Save error: {exception.Message}");
+      Console.WriteLine($"\nSave error: {exception.Message}");
     }
   }
 

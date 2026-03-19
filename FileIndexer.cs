@@ -13,19 +13,19 @@ public class FileIndexer {
     try {
 
       if (!Directory.Exists(targetDirectory)) {
-        Console.WriteLine($"Directory not found: {targetDirectory}");
+        Console.WriteLine($"\nDirectory not found: {targetDirectory}");
         return;
       }
 
       if (keywordsToIndex == null || keywordsToIndex.Length == 0) {
-        Console.WriteLine("No keywords specified for indexing");
+        Console.WriteLine("\nNo keywords specified for indexing");
         return;
       }
 
       var textFilesInDirectory = Directory.GetFiles(targetDirectory, "*.txt");
 
       if (textFilesInDirectory.Length == 0) {
-        Console.WriteLine("No text files in directory");
+        Console.WriteLine("\nNo text files in directory");
         return;
       }
 
@@ -34,7 +34,7 @@ public class FileIndexer {
       }
 
       if (_keywordToFilesMap.Count == 0) {
-        Console.WriteLine("No valid keywords");
+        Console.WriteLine("\nNo valid keywords");
         return;
       }
 
@@ -49,21 +49,21 @@ public class FileIndexer {
             }
           }
         } catch (Exception exception) {
-          Console.WriteLine($"Error reading file {filePath}: {exception.Message}");
+          Console.WriteLine($"\nError reading file {filePath}: {exception.Message}");
         }
       }
 
-      Console.WriteLine("Indexing completed");
+      Console.WriteLine("\nIndexing completed");
 
     } catch (Exception exception) {
-      Console.WriteLine($"Indexing error: {exception.Message}");
+      Console.WriteLine($"\nIndexing error: {exception.Message}");
     }
   }
 
   public void DisplayIndexResults() {
 
     if (_keywordToFilesMap.Count == 0) {
-      Console.WriteLine("Index is empty. Run indexing first!");
+      Console.WriteLine("\nIndex is empty. Run indexing first!");
       return;
     }
 
@@ -72,7 +72,7 @@ public class FileIndexer {
     foreach (var keywordEntry in _keywordToFilesMap) {
       if (keywordEntry.Value.Count > 0) {
         hasResults = true;
-        Console.WriteLine($"Keyword: {keywordEntry.Key}");
+        Console.WriteLine($"Keyword: {keywordEntry.Key}\n");
         foreach (var filePath in keywordEntry.Value) {
           Console.WriteLine($"  - {filePath}");
         }
@@ -80,7 +80,7 @@ public class FileIndexer {
     }
 
     if (!hasResults) {
-      Console.WriteLine("No files contain the specified keywords");
+      Console.WriteLine("\nNo files contain the specified keywords");
     }
   }
 }

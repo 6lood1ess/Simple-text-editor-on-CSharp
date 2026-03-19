@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 class Program {
   static void Main() {
@@ -34,8 +35,11 @@ class Program {
   static void RunTextEditor() {
 
     var textEditor = new TextEditor();
+
     Console.Write("\nFile path: ");
-    textEditor.Open(Console.ReadLine());
+    var filePath = Console.ReadLine();
+
+    textEditor.Open(filePath);
 
     while (true) {
 
@@ -47,7 +51,15 @@ class Program {
                           $"\n{textEditor.GetContent()}" +
                           $"\n{new string('-', 50)}");
 
-        Console.WriteLine("\nCommands:\n1. Add new line\n2. Undo\n3. Save and exit\n4. Exit without saving");
+        Console.WriteLine("\nCommands:" +
+                          "\n1. Add new line" +
+                          "\n2. Undo" +
+                          "\n3. Save as TXT and exit" +
+                          "\n4. Save as Binary and exit" +
+                          "\n5. Save as XML and exit" +
+                          "\n6. Load from Binary" +
+                          "\n7. Load from XML" +
+                          "\n8. Exit without saving");
 
         Console.Write("\nYour command: ");
         var editorCommand = Console.ReadLine();
@@ -67,6 +79,16 @@ class Program {
           textEditor.Save();
           break;
         } else if (editorCommand == "4") {
+          SaveFileAsBinary(textEditor, filePath);
+          break;
+        } else if (editorCommand == "5") {
+          SaveFileAsXml(textEditor, filePath);
+          break;
+        } else if (editorCommand == "6") {
+          LoadFileFromBinary(textEditor, ref filePath);
+        } else if (editorCommand == "7") {
+          LoadFileFromXml(textEditor, ref filePath);
+        } else if (editorCommand == "8") {
           Console.WriteLine("Exit without saving . . .");
           break;
         } else {
@@ -75,6 +97,120 @@ class Program {
       } catch (Exception exception) {
         Console.WriteLine($"Editor error: {exception.Message}");
       }
+    }
+  }
+
+  static void SaveFileAsBinary(TextEditor textEditor, string originalPath) {
+
+    try {
+
+      Console.Write("\nEnter binary file path (or press Enter for default): ");
+      string input = Console.ReadLine();
+      
+      string savePath = string.IsNullOrEmpty(input) ? Path.ChangeExtension(originalPath, ".bin") : input;
+      
+      var temporaryTextFile = new TextFile(originalPath);
+      temporaryTextFile.Content = textEditor.GetContent();
+      temporaryTextFile.LastModified = DateTime.Now;
+      
+      temporaryTextFile.BinarySerialize(savePath);
+      
+      Console.WriteLine($"\nFile saved as binary: {savePath}");
+
+    } catch (Exception exception) {
+      Console.WriteLine($"\nError saving binary: {exception.Message}");
+    }
+  }
+
+  static void SaveFileAsXml(TextEditor textEditor, string originalPath) {
+
+    try {
+
+      Console.Write("\nEnter XML file path (or press Enter for default): ");
+      string input = Console.ReadLine();
+      
+      string savePath = string.IsNullOrEmpty(input) ? Path.ChangeExtension(originalPath, ".xml") : input;
+      
+      var temporaryTextFile = new TextFile(originalPath);
+      temporaryTextFile.Content = textEditor.GetContent();
+      temporaryTextFile.LastModified = DateTime.Now;
+      
+      temporaryTextFile.XmlSerialize(savePath);
+      
+      Console.WriteLine($"\nFile saved as XML: {savePath}");
+
+    } catch (Exception exception) {
+      Console.WriteLine($"\nError saving XML: {exception.Message}");
+    }
+  }
+
+  static void LoadFileFromBinary(TextEditor textEditor, ref string filePath) {
+
+    try {
+
+      Console.Write("\nEnter binary file path to load: ");
+      string loadPath = Console.ReadLine();
+      
+      if (string.IsNullOrEmpty(loadPath)) {
+        Console.WriteLine("\nPath cannot be empty");
+        return;
+      }
+      
+      TextFile loadedFile = TextFile.BinaryDeserialize(loadPath);
+      
+      filePath = loadedFile.FilePath;
+      
+      if (textEditor.Open(filePath)) {
+        
+        Console.WriteLine("\nNote: opening file, then setting content from binary . . .");
+        
+        var lines = loadedFile.Content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
+        foreach (var line in lines) {
+          if (!string.IsNullOrEmpty(line)) {
+            textEditor.AddLine(line);
+          }
+        }
+        
+        Console.WriteLine($"Loaded from binary: {loadPath}");
+      }
+    } catch (Exception exception) {
+      Console.WriteLine($"\nError loading binary: {exception.Message}");
+    }
+  }
+
+  static void LoadFileFromXml(TextEditor textEditor, ref string filePath) {
+
+    try {
+
+      Console.Write("\nEnter XML file path to load: ");
+      string loadPath = Console.ReadLine();
+      
+      if (string.IsNullOrEmpty(loadPath)) {
+        Console.WriteLine("\nPath cannot be empty");
+        return;
+      }
+      
+      TextFile loadedFile = TextFile.XmlDeserialize(loadPath);
+      
+      filePath = loadedFile.FilePath;
+      
+      if (textEditor.Open(filePath)) {
+
+        Console.WriteLine("\nNote: opening file, then setting content from XML . . .");
+        
+        var lines = loadedFile.Content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
+        foreach (var line in lines) {
+          if (!string.IsNullOrEmpty(line)) {
+            textEditor.AddLine(line);
+          }
+        }
+        
+        Console.WriteLine($"Loaded from XML: {loadPath}");
+      }
+    } catch (Exception exception) {
+      Console.WriteLine($"\nError loading XML: {exception.Message}");
     }
   }
 
@@ -88,7 +224,7 @@ class Program {
       var directory = Console.ReadLine();
       
       if (string.IsNullOrWhiteSpace(directory)) {
-        Console.WriteLine("Directory not specified");
+        Console.WriteLine("\nDirectory not specified");
         return;
       }
 
@@ -96,14 +232,14 @@ class Program {
       var keywordsInput = Console.ReadLine();
       
       if (string.IsNullOrWhiteSpace(keywordsInput)) {
-        Console.WriteLine("Keywords not specified");
+        Console.WriteLine("\nKeywords not specified");
         return;
       }
 
       var keywords = Console.ReadLine().Split(',');
 
       if (keywords.Length == 0) {
-        Console.WriteLine("No valid keywords");
+        Console.WriteLine("\nNo valid keywords");
         return;
       }
 
@@ -117,7 +253,7 @@ class Program {
         }
       }
     } catch (Exception exception) {
-      Console.WriteLine($"Search error: {exception.Message}");
+      Console.WriteLine($"\nSearch error: {exception.Message}");
     }
   }
 
@@ -127,11 +263,11 @@ class Program {
 
     try {
 
-      Console.Write("Directory for indexing: ");
+      Console.Write("\nDirectory for indexing: ");
       var directory = Console.ReadLine();
 
       if (string.IsNullOrWhiteSpace(directory)) {
-        Console.WriteLine("Directory not specified");
+        Console.WriteLine("\nDirectory not specified");
         return;
       }
 
@@ -139,11 +275,11 @@ class Program {
       var keywords = Console.ReadLine().Split(',');
 
       indexer.BuildIndexForDirectory(directory, keywords);
-      Console.WriteLine("Indexing results:");
+      Console.WriteLine("\nIndexing results:");
       indexer.DisplayIndexResults();
 
     } catch (Exception exception) {
-      Console.WriteLine($"Indexing error: {exception.Message}");
+      Console.WriteLine($"\nIndexing error: {exception.Message}");
     }
   }
 }

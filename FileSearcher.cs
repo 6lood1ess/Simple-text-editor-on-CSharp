@@ -11,19 +11,19 @@ public class FileSearcher {
     try { 
 
       if (!Directory.Exists(directory)) {
-        Console.WriteLine($"Directory not found: {directory}");
+        Console.WriteLine($"\nDirectory not found: {directory}");
         return result;
       }
 
       if (keywords == null || keywords.Length == 0) {
-        Console.WriteLine("No keywords specified for search");
+        Console.WriteLine("\nNo keywords specified for search");
         return result;
       }
 
       var files = Directory.GetFiles(directory, "*.txt");
 
       if (files.Length == 0) {
-        Console.WriteLine("No text files in directory");
+        Console.WriteLine("\nNo text files in directory");
         return result;
       }
 
@@ -36,11 +36,11 @@ public class FileSearcher {
             result.Add(file);
           }
         } catch (Exception exception) {
-          Console.WriteLine($"Error reading file {file}: {exception.Message}");
+          Console.WriteLine($"\nError reading file {file}: {exception.Message}");
         }
       }
     } catch (Exception exception) {
-      Console.WriteLine($"Search error: {exception.Message}");
+      Console.WriteLine($"\nSearch error: {exception.Message}");
     }
 
     return result;
