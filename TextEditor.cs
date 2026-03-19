@@ -63,6 +63,9 @@ public class TextEditor {
     }
 
     if (_history.Count > 1) {
+
+      _history.Pop();
+
       var previousState = _history.Peek();
       _currentFile.Content = string.Join(Environment.NewLine, previousState.LinesContent);
       Console.WriteLine($"Undo to version from {_history.Peek().Timestamp}");
