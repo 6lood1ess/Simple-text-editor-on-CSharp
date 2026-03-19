@@ -7,10 +7,10 @@ class Program {
 
       try {
 
-        Console.WriteLine("--=| Text file processing program |=--" +
-                          "\nMain menu:\n1. File Editor\n2. File Search\n3. Index files\n4. Exit");
+        Console.WriteLine("\n--=| Text file processing program |=--" +
+                          "\n\nMain menu:\n1. File Editor\n2. File Search\n3. Index files\n4. Exit");
 
-        Console.Write("\nYour choice:");
+        Console.Write("\nYour choice: ");
         var userChoice = Console.ReadLine();
 
         if (userChoice == "1") {
@@ -20,13 +20,13 @@ class Program {
         } else if (userChoice == "3") {
           RunFileIndexer();
         } else if (userChoice == "4") {
-          Console.WriteLine("Program terminated");
+          Console.WriteLine("\nProgram terminated");
           break;
         } else {
-          Console.WriteLine("Invalid choice. Please enter 1-4");
+          Console.WriteLine("\nInvalid choice. Please enter 1-4");
         }
       } catch (Exception exception) {
-        Console.WriteLine($"Unexpected error: {exception.Message}");
+        Console.WriteLine($"\nUnexpected error: {exception.Message}");
       }
     }
   }
@@ -34,7 +34,7 @@ class Program {
   static void RunTextEditor() {
 
     var textEditor = new TextEditor();
-    Console.Write("File path: ");
+    Console.Write("\nFile path: ");
     textEditor.Open(Console.ReadLine());
 
     while (true) {
@@ -42,30 +42,25 @@ class Program {
       try {
 
         Console.WriteLine("\n-- Editor --" +
-                          "File content:" +
-                          new string('-', 50) +
-                          textEditor.GetContent() +
-                          new string('-', 50));
+                          "\nFile content:" +
+                          $"\n{new string('-', 50)}" +
+                          $"\n{textEditor.GetContent()}" +
+                          $"\n{new string('-', 50)}");
 
-        Console.WriteLine("\nCommands:\n1. Edit\n2. Undo\n3. Save and exit\n4. Exit without saving");
+        Console.WriteLine("\nCommands:\n1. Add new line\n2. Undo\n3. Save and exit\n4. Exit without saving");
 
-        Console.Write("Your command: ");
+        Console.Write("\nYour command: ");
         var editorCommand = Console.ReadLine();
 
         if (editorCommand == "1") {
 
-          Console.WriteLine("Enter new text (empty line to finish):");
+          Console.WriteLine("\nEnter new line:");
+          var newLine = Console.ReadLine();
 
-          var newText = "";
-          string line;
-
-          while (!string.IsNullOrEmpty(line = Console.ReadLine())) {
-            newText += line + Environment.NewLine;
+          if (!string.IsNullOrEmpty(newLine)) {
+            textEditor.AddLine(newLine);
+            Console.WriteLine("\nLine added");
           }
-
-          textEditor.Edit(newText.TrimEnd());
-          Console.WriteLine("Text updated");
-
         } else if (editorCommand == "2") {
           textEditor.Undo();
         } else if (editorCommand == "3") {

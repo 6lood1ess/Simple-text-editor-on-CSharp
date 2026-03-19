@@ -8,7 +8,7 @@ public class TextEditor {
   private bool _isFileOpened = false;
 
   private class Memento {
-    public string Content { get; set; }
+    public List<string> LinesContent { get; set; }
     public DateTime Timestamp { get; set; }
   }
 
@@ -17,7 +17,12 @@ public class TextEditor {
     try {
       _currentFile = new TextFile(path);
       _history.Clear();
-      SaveSnapshot();
+
+      var initialLines = new List<string>(_currentFile.Content.Split(new[] { Environment.NewLine }, StringSplitOptions.None));
+      _history.Push(new Memento { 
+        LinesContent = new List<string>(initialLines),
+        Timestamp = DateTime.Now 
+      });
 
       _isFileOpened = true;
       return true;
@@ -29,20 +34,23 @@ public class TextEditor {
     }
   }
 
-  public void Edit(string newContent) {
+  public void AddLine(string newLine) {
 
     if (!_isFileOpened) {
-      Console.WriteLine("You haven’t opened a text file to edit it");
+      Console.WriteLine("Open a file first!");
       return;
     }
-
-    _currentFile.Content = newContent;
-    SaveSnapshot();
+    
+    var currentLines = new List<string>(_history.Peek().LinesContent);
+    
+    currentLines.Add(newLine);
+    _currentFile.Content = string.Join(Environment.NewLine, currentLines);
+    SaveSnapshot(new List<string>(currentLines));
   }
 
-  private void SaveSnapshot() {
+  private void SaveSnapshot(List<string> lines) {
     _history.Push(new Memento {
-      Content = _currentFile.Content,
+      LinesContent = new List<string>(lines),
       Timestamp = DateTime.Now
     });
   }
@@ -55,8 +63,8 @@ public class TextEditor {
     }
 
     if (_history.Count > 1) {
-      _history.Pop();
-      _currentFile.Content = _history.Peek().Content;
+      var previousState = _history.Peek();
+      _currentFile.Content = string.Join(Environment.NewLine, previousState.LinesContent);
       Console.WriteLine($"Undo to version from {_history.Peek().Timestamp}");
 
     } else {
@@ -83,6 +91,25 @@ public class TextEditor {
   public string GetContent() {
     return _isFileOpened ? _currentFile.Content : "! FILE NOT OPENED !";
   }
+
+  public void DisplayLines() {
+
+    if (!_isFileOpened) {
+      Console.WriteLine("! FILE NOT OPENED !");
+      return;
+    }
+    
+    var lines = _history.Peek().LinesContent;
+    Console.WriteLine($"File content ({lines.Count} lines):\n" +
+                      new string('-', 50));
+    
+    for (int lineIndex = 0; lineIndex < lines.Count; ++lineIndex) {
+      Console.WriteLine($"{lineIndex + 1}: {lines[lineIndex]}");
+    }
+    
+    Console.WriteLine(new string('-', 50));
+  }
+
 
   public bool IsFileOpened() {
     return _isFileOpened;
