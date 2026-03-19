@@ -109,11 +109,8 @@ class Program {
       
       string savePath = string.IsNullOrEmpty(input) ? Path.ChangeExtension(originalPath, ".bin") : input;
       
-      var temporaryTextFile = new TextFile(originalPath);
-      temporaryTextFile.Content = textEditor.GetContent();
-      temporaryTextFile.LastModified = DateTime.Now;
-      
-      temporaryTextFile.BinarySerialize(savePath);
+      TextFile currentFile = textEditor.GetCurrentTextFile();
+      currentFile.BinarySerialize(savePath);
       
       Console.WriteLine($"\nFile saved as binary: {savePath}");
 
@@ -131,11 +128,8 @@ class Program {
       
       string savePath = string.IsNullOrEmpty(input) ? Path.ChangeExtension(originalPath, ".xml") : input;
       
-      var temporaryTextFile = new TextFile(originalPath);
-      temporaryTextFile.Content = textEditor.GetContent();
-      temporaryTextFile.LastModified = DateTime.Now;
-      
-      temporaryTextFile.XmlSerialize(savePath);
+      TextFile currentFile = textEditor.GetCurrentTextFile();
+      currentFile.XmlSerialize(savePath);
       
       Console.WriteLine($"\nFile saved as XML: {savePath}");
 

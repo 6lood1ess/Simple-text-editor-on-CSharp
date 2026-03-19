@@ -117,4 +117,8 @@ public class TextEditor {
   public bool IsFileOpened() {
     return _isFileOpened;
   }
+
+  public TextFile GetCurrentTextFile() {
+    return _currentFile;
+  }
 }
