@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="FileIndexer.cs" />
     <Compile Include="FileSearcher.cs" />
+    <Compile Include="Memento.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TextEditor.cs" />
