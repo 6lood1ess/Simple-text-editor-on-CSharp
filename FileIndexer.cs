@@ -4,11 +4,11 @@ using System.IO;
 
 public class FileIndexer {
  
-  private Dictionary<string, List<string>> _keywordToFilesMap = new Dictionary<string, List<string>>();
+  Dictionary<string, List<string>> index = new Dictionary<string, List<string>>();
 
-  public void BuildIndexForDirectory(string targetDirectory, string[] keywordsToIndex) {
+  public void BuildIndex(string targetDirectory, string[] keywordsToIndex) {
 
-    _keywordToFilesMap.Clear();
+    index.Clear();
 
     try {
 
@@ -22,34 +22,44 @@ public class FileIndexer {
         return;
       }
 
-      var textFilesInDirectory = Directory.GetFiles(targetDirectory, "*.txt");
+      foreach (var keyword in keywordsToIndex) {
+        index[keyword] = new List<string>();
+      }
 
-      if (textFilesInDirectory.Length == 0) {
-        Console.WriteLine("\nNo text files in directory");
+      List<string> textFilesInDirectory = new List<string>();
+      textFilesInDirectory.AddRange(Directory.GetFiles(targetDirectory, "*.txt"));
+      textFilesInDirectory.AddRange(Directory.GetFiles(targetDirectory, "*.bin"));
+      textFilesInDirectory.AddRange(Directory.GetFiles(targetDirectory, "*.xml"));
+
+      if (textFilesInDirectory.Count == 0) {
+        Console.WriteLine("\nNo text, binary, or XML files in directory");
         return;
       }
 
-      foreach (var keyword in keywordsToIndex) {
-        _keywordToFilesMap[keyword] = new List<string>();
-      }
-
-      if (_keywordToFilesMap.Count == 0) {
+      if (index.Count == 0) {
         Console.WriteLine("\nNo valid keywords");
         return;
       }
 
-      foreach (var filePath in textFilesInDirectory) {
+      foreach (string file in textFilesInDirectory) {
+         
+        string fileContent;
+        string lowerFileContent;
 
         try {
-          var fileContent = File.ReadAllText(filePath);
+          fileContent = ReadFileContent(file);
 
-          foreach (var keyword in keywordsToIndex) {
-            if (fileContent.ToLower().Contains(keyword.ToLower())) {
-              _keywordToFilesMap[keyword].Add(filePath);
+          if (!string.IsNullOrEmpty(fileContent)) {
+            lowerFileContent = fileContent.ToLower();
+
+            foreach (var keyword in keywordsToIndex) {
+              if (lowerFileContent.Contains(keyword.ToLower())) {
+                index[keyword].Add(file);
+              }
             }
           }
         } catch (Exception exception) {
-          Console.WriteLine($"\nError reading file {filePath}: {exception.Message}");
+          Console.WriteLine($"\nError reading file {file}: {exception.Message}");
         }
       }
 
@@ -60,21 +70,54 @@ public class FileIndexer {
     }
   }
 
+  public string ReadFileContent(string filePath) {
+
+    string extension = Path.GetExtension(filePath).ToLower();
+
+    try {
+
+      switch (extension) {
+        
+        case ".txt":
+          using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
+            using (StreamReader reader = new StreamReader(fileStream)) {
+              return reader.ReadToEnd();
+            }
+          }
+
+        case ".xml":
+          TextFile xmlFile = TextFile.XmlDeserialize(filePath);
+          return xmlFile.Content;
+
+        case ".bin":
+          TextFile binaryFile = TextFile.BinaryDeserialize(filePath);
+          return binaryFile.Content;
+
+        default:
+          return null;
+      }
+    } catch {
+      return null;
+    }
+  }
+
   public void DisplayIndexResults() {
 
-    if (_keywordToFilesMap.Count == 0) {
-      Console.WriteLine("\nIndex is empty. Run indexing first!");
+    if (index.Count == 0) {
+      Console.WriteLine("\nIndex is empty");
       return;
     }
 
     bool hasResults = false;
+    string extension;
 
-    foreach (var keywordEntry in _keywordToFilesMap) {
+    foreach (var keywordEntry in index) {
       if (keywordEntry.Value.Count > 0) {
         hasResults = true;
         Console.WriteLine($"Keyword: {keywordEntry.Key}\n");
-        foreach (var filePath in keywordEntry.Value) {
-          Console.WriteLine($"  - {filePath}");
+        foreach (var file in keywordEntry.Value) {
+          extension = Path.GetExtension(file);
+          Console.WriteLine($"  - {file} [{extension}]");
         }
       }
     }
