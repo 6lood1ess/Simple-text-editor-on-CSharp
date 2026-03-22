@@ -41,6 +41,15 @@ public class TextEditor : IOriginator {
     Console.WriteLine("Content updated :)");
   }
 
+  public string GetContent() {
+
+    if (!isFileOpened) {
+      return "! FILE NOT OPENED !";
+    }
+        
+    return currentFile.Content;
+  }
+
   public void Undo() {
 
     if (!isFileOpened) {
