@@ -90,10 +90,10 @@ public class TextEditor : IOriginator {
       return;
     }
     
-    Console.WriteLine($"FILE CONTENT:\n" +
-                      new string('-', 50) +
-                      $"{currentFile.Content}" +
-                      new string('-', 50));
+    Console.WriteLine($"\nFILE CONTENT:\n" +
+                      $"\n{new string('-', 50)}" +
+                      $"\n{currentFile.Content}" +
+                      $"\n{new string('-', 50)}");
   }
 
 
