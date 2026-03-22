@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -9,11 +10,11 @@ class Program {
 
       try {
 
-        Console.WriteLine("\n--=| Text file processing program |=--" +
+        Console.WriteLine("\n--=| TEXT FILE PROCESSING PROGRAM |=--" +
                           "\n\nMain menu:\n1. File Editor\n2. File Search\n3. Index files\n4. Exit");
 
         Console.Write("\nYour choice: ");
-        var userChoice = Console.ReadLine();
+        string userChoice = Console.ReadLine();
 
         if (userChoice == "1") {
           RunTextEditor();
@@ -35,13 +36,36 @@ class Program {
 
   static void RunTextEditor() {
 
-    var textEditor = new TextEditor();
+    TextEditor textEditor = new TextEditor();
 
     Console.Write("\nFile path: ");
-    var filePath = Console.ReadLine();
+    string filePath = Console.ReadLine();
 
     if (!File.Exists(filePath)) {
       Console.WriteLine($"\nFile not found: {filePath}");
+      return;
+    }
+
+    TextFile temporaryFile = null;
+    string temporaryPath;
+    string extension = Path.GetExtension(filePath).ToLower();
+
+    try {
+
+      if (extension == ".xml") {
+        temporaryFile = TextFile.XmlDeserialize(filePath);
+        temporaryPath = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(filePath) + "_temp.txt");
+        File.WriteAllText(temporaryPath, temporaryFile.Content);
+        filePath = temporaryPath;
+
+      } else if (extension == ".bin") {
+        temporaryFile = TextFile.BinaryDeserialize(filePath);
+        temporaryPath = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(filePath) + "_temp.txt");
+        File.WriteAllText(temporaryPath, temporaryFile.Content);
+        filePath = temporaryPath;
+      }
+    } catch (Exception exception) {
+      Console.WriteLine($"Error loading file: {exception.Message}");
       return;
     }
 
@@ -51,70 +75,107 @@ class Program {
 
     while (true) {
 
-      try {
+      textEditor.DisplayContent();
 
-        textEditor.DisplayLines();
+      Console.WriteLine("\nCommands:" +
+                        "\n1. Full rewrite content" +
+                        "\n2. Undo" +
+                        "\n3. Save as TXT and exit" +
+                        "\n4. Save as Binary and exit" +
+                        "\n5. Save as XML and exit" +
+                        "\n6. Exit without saving");
 
-        Console.WriteLine("\nCommands:" +
-                          "\n1. Add new line" +
-                          "\n2. Undo" +
-                          "\n3. Save as TXT and exit" +
-                          "\n4. Save as Binary and exit" +
-                          "\n5. Save as XML and exit" +
-                          "\n6. Load from Binary" +
-                          "\n7. Load from XML" +
-                          "\n8. Exit without saving");
+      Console.Write("\nYour command: ");
+      string editorCommand = Console.ReadLine();
 
-        Console.Write("\nYour command: ");
-        var editorCommand = Console.ReadLine();
+      if (editorCommand == "1") {
+        Console.WriteLine("\nEnter text line by line. Press Enter on an empty line to finish:\n");
+        string newContent = ReadMultilineInput();
+        textEditor.SetContent(newContent);
 
-        if (editorCommand == "1") {
+      } else if (editorCommand == "2") {
+        textEditor.Undo();
 
-          Console.WriteLine("\nEnter new line:");
-          var newLine = Console.ReadLine();
+      } else if (editorCommand == "3") {
+        textEditor.Save();
+                
+        // If it was a temporary file, save back to the original format
+        if (temporaryFile != null) {
+          string originalPath = filePath.Replace("_temp.txt", "");
 
-          if (!string.IsNullOrEmpty(newLine)) {
-            textEditor.AddLine(newLine);
-            Console.WriteLine("\nLine added");
+          if (File.Exists(originalPath)) {
+
+            if (extension == ".xml") {
+              temporaryFile.Content = textEditor.GetContent();
+              temporaryFile.XmlSerialize(originalPath);
+              Console.WriteLine($"\nSaved back to XML: {originalPath}");
+
+            } else if (extension == ".bin") {
+              temporaryFile.Content = textEditor.GetContent();
+              temporaryFile.BinarySerialize(originalPath);
+              Console.WriteLine($"\nSaved back to binary: {originalPath}");
+            }
           }
-        } else if (editorCommand == "2") {
-          textEditor.Undo();
-        } else if (editorCommand == "3") {
-          textEditor.Save();
-          break;
-        } else if (editorCommand == "4") {
-          SaveFileAsBinary(textEditor, filePath);
-          break;
-        } else if (editorCommand == "5") {
-          SaveFileAsXml(textEditor, filePath);
-          break;
-        } else if (editorCommand == "6") {
-          LoadFileFromBinary(textEditor, ref filePath);
-        } else if (editorCommand == "7") {
-          LoadFileFromXml(textEditor, ref filePath);
-        } else if (editorCommand == "8") {
-          Console.WriteLine("Exit without saving . . .");
-          break;
-        } else {
-          Console.WriteLine("Invalid command! >:O");
         }
-      } catch (Exception exception) {
-        Console.WriteLine($"Editor error: {exception.Message}");
+
+        break;
+
+      } else if (editorCommand == "4") {
+        SaveFileAsBinary(textEditor, filePath);
+        break;
+
+      } else if (editorCommand == "5") {
+        SaveFileAsXml(textEditor, filePath);
+        break;
+
+      } else if (editorCommand == "6") {
+        Console.WriteLine("\nExiting without saving . . .");
+        break;
+
+      } else {
+        Console.WriteLine("Invalid command. Please enter 1-6");
+      }
+
+      if (filePath.Contains("_temp.txt") && File.Exists(filePath)) {
+        try { 
+          File.Delete(filePath);
+        } catch { }
       }
     }
   }
 
+  static string ReadMultilineInput() {
+    
+    string result = "";
+    
+    while (true) {
+      string line = Console.ReadLine();
+
+      if (string.IsNullOrEmpty(line)) {
+        break;
+      }
+        
+      result += line + Environment.NewLine;
+    }
+    
+    return result.TrimEnd(Environment.NewLine.ToCharArray());
+  }
+
   static void SaveFileAsBinary(TextEditor textEditor, string originalPath) {
+
+    string input, savePath;
 
     try {
 
       Console.Write("\nEnter binary file path (or press Enter for default): ");
-      string input = Console.ReadLine();
+      input = Console.ReadLine();
       
-      string savePath = string.IsNullOrEmpty(input) ? Path.ChangeExtension(originalPath, ".bin") : input;
+      savePath = string.IsNullOrEmpty(input) ? Path.ChangeExtension(originalPath, ".bin") : input;
       
-      TextFile currentFile = textEditor.GetCurrentTextFile();
-      currentFile.BinarySerialize(savePath);
+      TextFile fileToSave = new TextFile();
+      fileToSave.Content = textEditor.GetContent();
+      fileToSave.FilePath = savePath;
+      fileToSave.BinarySerialize(savePath);
       
       Console.WriteLine($"\nFile saved as binary: {savePath}");
 
@@ -125,15 +186,19 @@ class Program {
 
   static void SaveFileAsXml(TextEditor textEditor, string originalPath) {
 
+    string input, savePath;
+
     try {
 
       Console.Write("\nEnter XML file path (or press Enter for default): ");
-      string input = Console.ReadLine();
+      input = Console.ReadLine();
       
-      string savePath = string.IsNullOrEmpty(input) ? Path.ChangeExtension(originalPath, ".xml") : input;
+      savePath = string.IsNullOrEmpty(input) ? Path.ChangeExtension(originalPath, ".xml") : input;
       
-      TextFile currentFile = textEditor.GetCurrentTextFile();
-      currentFile.XmlSerialize(savePath);
+      TextFile fileToSave = new TextFile();
+      fileToSave.Content = textEditor.GetContent();
+      fileToSave.FilePath = savePath;
+      fileToSave.XmlSerialize(savePath);
       
       Console.WriteLine($"\nFile saved as XML: {savePath}");
 
@@ -142,78 +207,14 @@ class Program {
     }
   }
 
-  static void LoadFileFromBinary(TextEditor textEditor, ref string filePath) {
-
-    try {
-
-      Console.Write("\nEnter binary file path to load: ");
-      string loadPath = Console.ReadLine();
-      
-      if (string.IsNullOrEmpty(loadPath)) {
-        Console.WriteLine("\nPath cannot be empty");
-        return;
-      }
-      
-      TextFile loadedFile = TextFile.BinaryDeserialize(loadPath);
-      
-      string temporaryPath = loadedFile.FilePath;
-      
-      if (string.IsNullOrEmpty(temporaryPath) || !Directory.Exists(Path.GetDirectoryName(temporaryPath))) {
-        temporaryPath = Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(loadPath) + ".txt");
-      }
-      
-      File.WriteAllText(temporaryPath, loadedFile.Content);
-      filePath = temporaryPath;
-      
-      if (textEditor.Open(filePath)) {
-        Console.WriteLine($"\nLoaded from binary: {loadPath}");
-      }
-
-    } catch (Exception exception) {
-      Console.WriteLine($"\nError loading binary: {exception.Message}");
-    }
-  }
-
-  static void LoadFileFromXml(TextEditor textEditor, ref string filePath) {
-
-    try {
-
-      Console.Write("\nEnter XML file path to load: ");
-      string loadPath = Console.ReadLine();
-      
-      if (string.IsNullOrEmpty(loadPath)) {
-        Console.WriteLine("\nPath cannot be empty");
-        return;
-      }
-      
-      TextFile loadedFile = TextFile.XmlDeserialize(loadPath);
-      
-      string temporaryPath = loadedFile.FilePath;
-      
-      if (string.IsNullOrEmpty(temporaryPath) || !Directory.Exists(Path.GetDirectoryName(temporaryPath))) {
-        temporaryPath = Path.Combine(Directory.GetCurrentDirectory(), Path.GetFileName(loadPath) + ".txt");
-      }
-      
-      File.WriteAllText(temporaryPath, loadedFile.Content);
-      filePath = temporaryPath;
-      
-      if (textEditor.Open(filePath)) {
-        Console.WriteLine($"\nLoaded from XML: {loadPath}");
-      }
-
-    } catch (Exception exception) {
-      Console.WriteLine($"\nError loading XML: {exception.Message}");
-    }
-  }
-
   static void RunFileSearcher() {
 
-    var fileSearcher = new FileSearcher();
+    FileSearcher fileSearcher = new FileSearcher();
 
     try {
 
       Console.Write("\nEnter directory to search: ");
-      var directory = Console.ReadLine();
+      string directory = Console.ReadLine();
       
       if (string.IsNullOrWhiteSpace(directory)) {
         Console.WriteLine("\nDirectory not specified");
@@ -221,14 +222,14 @@ class Program {
       }
 
       Console.Write("Enter keywords (comma separated): ");
-      var keywordsInput = Console.ReadLine();
+      string keywordsInput = Console.ReadLine();
       
       if (string.IsNullOrWhiteSpace(keywordsInput)) {
         Console.WriteLine("\nKeywords not specified");
         return;
       }
 
-      var keywords = keywordsInput.Split(',').Select(keyword => keyword.Trim()).ToArray();
+      string[] keywords = keywordsInput.Split(',').Select(keyword => keyword.Trim()).ToArray();
 
       if (keywords.Length == 0 || keywords.All(string.IsNullOrEmpty)) {
         Console.WriteLine("\nNo valid keywords");
@@ -256,7 +257,7 @@ class Program {
     try {
 
       Console.Write("\nDirectory for indexing: ");
-      var directory = Console.ReadLine();
+      string directory = Console.ReadLine();
 
       if (string.IsNullOrWhiteSpace(directory)) {
         Console.WriteLine("\nDirectory not specified");
@@ -264,16 +265,16 @@ class Program {
       }
 
       Console.Write("Enter keywords (comma separated): ");
-      var keywordsInput = Console.ReadLine();
+      string keywordsInput = Console.ReadLine();
       
       if (string.IsNullOrWhiteSpace(keywordsInput)) {
         Console.WriteLine("\nKeywords not specified");
         return;
       }
 
-      var keywords = keywordsInput.Split(',').Select(keyword => keyword.Trim()).ToArray();
+      string[] keywords = keywordsInput.Split(',').Select(keyword => keyword.Trim()).ToArray();
 
-      indexer.BuildIndexForDirectory(directory, keywords);
+      indexer.BuildIndex(directory, keywords);
       Console.WriteLine("\nIndexing results:");
       indexer.DisplayIndexResults();
 

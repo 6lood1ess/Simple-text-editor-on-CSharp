@@ -1,14 +1,14 @@
 ﻿using System;
 using System.IO;
-using System.Text;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 
 [Serializable]
 public class TextFile {
 
-  public string FilePath { get; set; }
-  public string Content { get; set; }
-  public DateTime LastModified { get; set; }
+  public string FilePath;
+  public string Content;
+  public DateTime LastModified;
 
   public TextFile() { } //for serialization
 
@@ -20,11 +20,17 @@ public class TextFile {
   public void Load() {
     
     try {
+
       if (!File.Exists(FilePath)) {
         throw new FileNotFoundException($"\nFile not found: {FilePath}");
       }
 
-      Content = File.ReadAllText(FilePath);
+      using (FileStream fileStream = new FileStream(FilePath, FileMode.Open, FileAccess.Read)) {
+        using (StreamReader reader = new StreamReader(fileStream)) {
+          Content = reader.ReadToEnd();
+        }
+      }
+
       LastModified = File.GetLastWriteTime(FilePath);
 
     } catch (Exception exception) {
@@ -35,7 +41,13 @@ public class TextFile {
   public void Save() {
 
     try { 
-      File.WriteAllText(FilePath, Content);
+      
+      using (FileStream fileStream = new FileStream(FilePath, FileMode.Create, FileAccess.Write)) {
+        using (StreamWriter writer = new StreamWriter(fileStream)) {
+          writer.Write(Content);
+        }
+      }
+
       LastModified = DateTime.Now;
 
     } catch (Exception exception) { 
@@ -46,12 +58,9 @@ public class TextFile {
   public void BinarySerialize(string path) {
 
     try {
-      using (var stream = new FileStream(path, FileMode.Create)) {
-        using (var writer = new BinaryWriter(stream)) {
-          writer.Write(FilePath);
-          writer.Write(Content);
-          writer.Write(LastModified.Ticks);
-        }
+      BinaryFormatter binaryFormatter = new BinaryFormatter();
+      using (FileStream fileStream = new FileStream(path, FileMode.Create)) {
+        binaryFormatter.Serialize(fileStream, this);
       }
     } catch (Exception exception) { 
       throw new Exception($"\nBinary serialization error: {exception.Message}");
@@ -60,16 +69,10 @@ public class TextFile {
 
   public static TextFile BinaryDeserialize(string path) {
 
-    try { 
-      using (var stream = new FileStream(path, FileMode.Open)) {
-        using (var reader = new BinaryReader(stream)) {
-
-          return new TextFile {
-            FilePath = reader.ReadString(),
-            Content = reader.ReadString(),
-            LastModified = new DateTime(reader.ReadInt64())
-          };
-        }
+    try {
+      BinaryFormatter binaryFormatter = new BinaryFormatter();
+      using (FileStream fileStream = new FileStream(path, FileMode.Open)) {
+        return (TextFile)binaryFormatter.Deserialize(fileStream);
       }
     } catch (Exception exception) {
       throw new Exception($"\nBinary deserialization error: {exception.Message}");
@@ -79,10 +82,9 @@ public class TextFile {
   public void XmlSerialize(string path) {
 
     try {
-      var xmlSerializer = new XmlSerializer(typeof(TextFile));
-
-      using (var stream = new FileStream(path, FileMode.Create)) {
-        xmlSerializer.Serialize(stream, this);
+      XmlSerializer xmlSerializer = new XmlSerializer(typeof(TextFile));
+      using (FileStream fileStream = new FileStream(path, FileMode.Create)) {
+        xmlSerializer.Serialize(fileStream, this);
       }
     } catch (Exception exception) { 
       throw new Exception($"\nXML serialization error: {exception.Message}");
@@ -92,10 +94,9 @@ public class TextFile {
   public static TextFile XmlDeserialize(string path) {
 
     try {
-      var xmlSerializer = new XmlSerializer(typeof(TextFile));
-
-      using (var stream = new FileStream(path, FileMode.Open)) {
-        return (TextFile)xmlSerializer.Deserialize(stream);
+      XmlSerializer xmlSerializer = new XmlSerializer(typeof(TextFile));
+      using (FileStream fileStream = new FileStream(path, FileMode.Open)) {
+        return (TextFile)xmlSerializer.Deserialize(fileStream);
       }
     } catch (Exception exception) {
       throw new Exception($"\nXML deserialization error: {exception.Message}");

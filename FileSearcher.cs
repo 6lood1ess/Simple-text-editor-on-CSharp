@@ -6,7 +6,7 @@ using System.Linq;
 public class FileSearcher {
   public List<string> SearchByKeywords(string directory, string[] keywords) {
 
-    var result = new List<string>();
+    List<string> result = new List<string>();
 
     try { 
 
@@ -20,20 +20,29 @@ public class FileSearcher {
         return result;
       }
 
-      var files = Directory.GetFiles(directory, "*.txt");
+      List<string> files = new List<string>();
+      files.AddRange(Directory.GetFiles(directory, "*.txt"));
+      files.AddRange(Directory.GetFiles(directory, "*.bin"));
+      files.AddRange(Directory.GetFiles(directory, "*.xml"));
 
-      if (files.Length == 0) {
-        Console.WriteLine("\nNo text files in directory");
+      if (files.Count == 0) {
+        Console.WriteLine("\nNo text, binary, or XML files in directory");
         return result;
       }
 
-      foreach (var file in files) {
+      foreach (string file in files) {
+
+        string content, lowerContent;
 
         try {
-          var content = File.ReadAllText(file);
+          content = ReadFileContent(file);
 
-          if (keywords.Any(keyword => content.ToLower().Contains(keyword.ToLower()))) {
-            result.Add(file);
+          if (!string.IsNullOrEmpty(content)) {
+            lowerContent = content.ToLower();
+
+            if (keywords.Any(keyword => lowerContent.Contains(keyword.ToLower()))) {
+              result.Add(file);
+            }
           }
         } catch (Exception exception) {
           Console.WriteLine($"\nError reading file {file}: {exception.Message}");
@@ -45,4 +54,36 @@ public class FileSearcher {
 
     return result;
   }
+
+  public string ReadFileContent(string filePath) {
+
+    string extension = Path.GetExtension(filePath).ToLower();
+
+    try {
+
+      switch (extension) {
+
+        case ".txt":
+          using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
+            using (StreamReader reader = new StreamReader(fileStream)) {
+              return reader.ReadToEnd();
+            }
+          }
+                    
+        case ".xml":
+          TextFile xmlFile = TextFile.XmlDeserialize(filePath);
+          return xmlFile.Content;
+                    
+        case ".bin":
+          TextFile binaryFile = TextFile.BinaryDeserialize(filePath);
+          return binaryFile.Content;
+                    
+        default:
+        return null;
+      }
+    } catch {
+      return null;
+    }
+  }
 }
+
